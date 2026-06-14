@@ -264,8 +264,7 @@ def deploy_to_splunk(sigma_rule_path, rule_title):
                 search=splunk_spl,
                 **{
                     "is_scheduled": 1, # Runs automatically instead of the user clicking "Run Search"               
-                    "cron_schedule": "*/5 * * * *", # Runs every 5 minutes   
-                    "ui.display_apps": "search"        
+                    "cron_schedule": "*/5 * * * *", # Runs every 5 minutes        
                 }
             )
             
