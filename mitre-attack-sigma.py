@@ -266,9 +266,9 @@ def deploy_to_splunk(sigma_rule_path, rule_title):
                     "is_scheduled": 1, # Runs automatically instead of the user clicking "Run Search"               
                     "cron_schedule": "*/5 * * * *", # Runs every 5 minutes   
                     "alert_type": "number of events",
-                    "alert.comparator": "greater than",
-                    "alert.threshold": 0,             
-                    "alert.suppress": 0,
+                    "alert_comparator": "greater than",
+                    "alert_threshold": 0,             
+                    "alert_suppress": 0,
                     "ui.display_apps": "search"        
                 }
             )
