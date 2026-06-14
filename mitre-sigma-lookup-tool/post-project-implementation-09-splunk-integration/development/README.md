@@ -21,3 +21,24 @@ pip install splunk-sdk pysigma pysigma-backend-splunk
 
 ## SIEM Architecture Diagram
 <img width="1319" height="628" alt="image" src="https://github.com/user-attachments/assets/5da63915-5516-4654-a2b0-c4ae3f61bfff" />
+
+## Demo
+- For demo purposes, I chose the `T1003` ATT&CK ID (OS Credential Dumping). I ran the command `mitre T1003` and hit `y` when asked
+
+<img width="1246" height="546" alt="image" src="https://github.com/user-attachments/assets/9b3a239a-1c64-42df-b64d-59ab501042ed" />
+
+- Then, it gives me a selection choice of the Sigma rules I could choose from. Here, I picked `118`
+
+<img width="1194" height="604" alt="image" src="https://github.com/user-attachments/assets/0e9581aa-5f68-4261-a7fd-40cf617aa983" />
+
+- As we can see, it worked successfully
+
+<img width="3128" height="936" alt="image" src="https://github.com/user-attachments/assets/d785d93d-6c65-4c82-a80b-fe5be0f5ed9d" />
+
+- If we navigate to `Splunk` > `Settings` (Gear Icon) > `Searches, reports and alerts`, we see the deployed rule
+
+<img width="1512" height="310" alt="image" src="https://github.com/user-attachments/assets/73872e61-3b23-4a36-a3e5-7dd512a62980" />
+
+- If we click on `Edit`, we can see that SPL Query itself
+
+<img width="1512" height="586" alt="image" src="https://github.com/user-attachments/assets/07bfe985-3b00-4fe5-bf64-c86e7022a9c0" />
