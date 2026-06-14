@@ -20,7 +20,7 @@ pip install splunk-sdk pysigma pysigma-backend-splunk
 - Then I added the code logic (see `mitre-attack-sigma.py` file). The flow is detailed below in a nice detailed diagram
 
 ## SIEM Architecture Diagram
-<img width="1319" height="628" alt="image" src="https://github.com/user-attachments/assets/5da63915-5516-4654-a2b0-c4ae3f61bfff" />
+<img width="1247" height="694" alt="image" src="https://github.com/user-attachments/assets/a226bc4d-df83-4277-9a1c-1c77d1cece8c" />
 
 ## Demo
 - For demo purposes, I chose the `T1003` ATT&CK ID (OS Credential Dumping). I ran the command `mitre T1003` and hit `y` when asked
