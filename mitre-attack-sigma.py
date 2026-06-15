@@ -84,6 +84,8 @@ def process_arguments():
     parser.add_argument("-f", "--file", help="Path to a text file containing a list of ATT&CK IDs (one per line)")
     parser.add_argument("-o", "--output-dir", default="reports", help="Directory folder where bulk reports will be saved")
 
+    BASE_DIR = Path(__file__).resolve().parent
+    
     # Specifies the MITRE ATT&CK STIX dataset file and points to a cloned Sigma rules repository
     parser.add_argument("--stix", default="enterprise-attack.json", help="Path to enterprise STIX JSON bundle")
     parser.add_argument("--sigma", default="sigma", help="Path to local Sigma repo (folder)")
