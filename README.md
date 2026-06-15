@@ -1,22 +1,39 @@
 #  MITRE-Sigma Lookup Tool
 
-CLI tool to lookup the MITRE mitigations and the Sigma detections for any technique
+CLI tool that maps MITRE ATT&CK techniques to associated mitigations, Sigma detection rules, and Atomic Red Team tests, allowing analysts to explore defensive controls, detection content, and attack emulation resources from a single interface
 ## Project Background
 
 **MITRE ATT&CK** is a globally accessible knowledge base of adversary tactics and techniques. Security teams use it to understand attacker behaviors, plan defenses, and map observed activity in their networks.
 
 **Sigma** is a generic and open signature format for SIEM (Security Information and Event Management) systems. It allows security teams to define detection rules once and convert them to different SIEM formats. By linking ATT&CK techniques to Sigma rules, analysts can quickly translate threat intelligence into actionable detection logic.
 
-Through this project, I will interact with ATT&CK data, extract useful information, and gain hands-on exposure to practical cybersecurity workflows while developing my Python and Linux skills.
+**Atomic Red Team** is an open-source library of ATT&CK-mapped tests that safely emulate adversary behaviors in real environments. Security teams use these tests to validate detections, assess defensive controls, and practice threat hunting against realistic attack techniques. By incorporating Atomic Red Team data alongside ATT&CK techniques, mitigations, and Sigma rules, analysts can better understand how an attack is performed, detected, and defended against.
 
 ## Project Specifications
 
-Input: an ATT&CK technique ID (`T1564`) or technique name.
+**Input:**
 
-Output:
-	- Basic technique info (name, description)
-	- ATT&CK mitigations related to that technique
-	- Sigma rules that mention the technique ID
+- ATT&CK Technique ID (e.g., T1566)
+- ATT&CK Technique Name (e.g., Phishing)
+- ATT&CK Technique Description (e.g., Adversaries may send victims emails containing malicious)
+
+**Output:**
+- Technique name
+- Technique description
+- ATT&CK mitigations associated with the technique
+- Sigma detection rules that reference the technique
+- Atomic Red Team tests associated with the technique
+
+## Features
+- Execute the MITRE-Sigma Lookup Tool from anywhere in the terminal using a custom alias
+- Export console output to files using Rich Console recording with optional `-o/--output` support
+- Support bulk processing of ATT&CK techniques via comma-separated input or text file ingestion with per-technique report generation and structured output directories
+- Integrated Atomic Red Team to display ATT&CK-mapped adversary emulation tests in a formatted table
+- Built a Django web interface with search dashboard, backend integration, routing, and HTML templates for browser-based lookups
+- Improved Sigma search performance using an inverted index and in-memory caching for fast `O(1)` technique lookups
+- Added automatic updates for MITRE ATT&CK and Sigma data using GitPython with a single `--update` flag
+- Enhanced search with partial matching on technique names and descriptions, including paginated results for large outputs
+- Integrated Splunk SIEM using PySigma and Splunk SDK to convert Sigma rules into Splunk queries and deploy them as active alerts
 
 ### Dependencies
 Python 3.9+
