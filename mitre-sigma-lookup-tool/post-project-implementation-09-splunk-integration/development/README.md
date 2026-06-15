@@ -20,7 +20,7 @@ pip install splunk-sdk pysigma pysigma-backend-splunk
 - Then I added the code logic (see `mitre-attack-sigma.py` file). The flow is detailed below in a nice detailed diagram
 
 ## SIEM Architecture Diagram
-<img width="945" height="655" alt="image" src="https://github.com/user-attachments/assets/a1e8c6c7-a1b9-4ced-9b9a-4547b1160206" />
+<img width="1015" height="702" alt="image" src="https://github.com/user-attachments/assets/721c7c86-6256-4f2e-99e3-0f85e17ef881" />
 
 
 ## Demo
