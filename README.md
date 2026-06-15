@@ -73,15 +73,13 @@ echo -e '#!/usr/bin/env python3\nprint("hello world")' > lookup.py
 ## Example Usage
 ### Searching by Technique ID
 
-Below we can see the successful run for Technique ID `T15661`. This printed out a comprehensive description of what phishing is (adversaries sending malicious messages to gain access to victim systems, utilizing social engineering, spearphishing, malicious attachments, or links). It also displayed a mitigation table of how to defend against phising such as `Audit (M1047)`, `Network Intrusion Prevention (M1031)`, `Software Configuration (M1054)`, `Restrict Web-Based Content (M1021)`, `Antivirus/Antimalware (M1049)`, and `User Training (M1017)`. 
+```bash
+mitre T1566
+```
 
-The Sigma rules tables describes the attempt to find code that can detect phishing attempts. For example, the script found files in the local folders, `proc_creation_win_office_outlook_execution_from_temp.yml and iso_phishing.yml` that contain the text `T15661`. There are also many `no titles` and this is because the script had trouble reading some of the internal YAML fields and so it could not extract the rule titles and instead showed the default placeholders. However, we see one rule parsed correct named `Search-ms and WebDAV Suspicious Indicators in URL`
+Below we can see the successful run for Technique ID `T1566`. This printed out a comprehensive description of what phishing is (adversaries sending malicious messages to gain access to victim systems, utilizing social engineering, spearphishing, malicious attachments, or links). It also displayed a mitigation table of how to defend against phising such as `Audit (M1047)`, `Network Intrusion Prevention (M1031)`, `Software Configuration (M1054)`, `Restrict Web-Based Content (M1021)`, `Antivirus/Antimalware (M1049)`, and `User Training (M1017)`. 
 
-This is a name of a Sigma detection rule that is designed to detect phising links that abuse Windows feature such as `search-ms` and `WebDAV`. Attackers sometimes use these technologies to trick users into opening malicious files or connecting to attacker-controlled servers. 
-
-`search-ms` is a Windows protocol that opens the Windows Search feature.
-Attackers can craft malicious links that look harmless but actually open remote content. `WedDAV` is a protocol that lets remote web servers behave like shared network drives.
-Attackers can host malware on a WebDAV server so the victim’s computer treats it like a normal file share. For example, a phising email might contain `search-ms:query=invoice` or connect to a remote WebDAV location. The Sigma rule watches logs for these suspicious URL patterns because they are commonly used in phishing and malware delivery campaigns
+The Sigma rules tables describes the attempt to find code that can detect phishing attempts. For example, the script found files in the local folders, `proc_creation_win_office_outlook_execution_from_temp.yml and iso_phishing.yml` that contain the text `T15661`. We see one rule parsed named `Search-ms and WebDAV Suspicious Indicators in URL`
 
 <img width="6412" height="10076" alt="mitre_ID" src="https://github.com/user-attachments/assets/e95e816f-8da4-4d50-b89d-1f8c3edd9075" />
 
