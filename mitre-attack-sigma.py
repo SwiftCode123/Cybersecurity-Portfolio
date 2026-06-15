@@ -264,7 +264,12 @@ def deploy_to_splunk(sigma_rule_path, rule_title):
                 search=splunk_spl,
                 **{
                     "is_scheduled": 1, # Runs automatically instead of the user clicking "Run Search"               
-                    "cron_schedule": "*/5 * * * *", # Runs every 5 minutes        
+                    "cron_schedule": "*/5 * * * *", # Runs every 5 minutes
+                    "alert_type": "number of events",
+                    "alert_threshold": "0",
+                    "alert_comparator": "greater than",   
+                    "actions": "webhook", 
+                    "action.webhook.param.url": "https://httpbin.org/post"  
                 }
             )
             
