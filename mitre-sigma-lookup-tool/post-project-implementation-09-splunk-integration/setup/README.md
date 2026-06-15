@@ -106,7 +106,7 @@ ssh username_goes_here@<VM_IP_ADDRESS_GOES_HERE>
 sudo apt update && sudo apt upgrade -y
 sudo apt install wget -y
 ```
-- This was to ensure packet manager was up to date and that we have `wget` installed so we can pull down the installer package. I ran this inside my Proxmox VM SSH session
+- This was to ensure packet manager was up to date and that we have `wget` installed so we can pull down the installer package. I ran this inside my Proxmox VM
 
 ### 2. Download the Splunk Enterprise Package
 ```bash
