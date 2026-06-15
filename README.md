@@ -97,25 +97,28 @@ The sigma output shows us ways to detect this attack. In these rules `proc_creat
   <img width="5367" height="16384" alt="mitre_name" src="https://github.com/user-attachments/assets/e3ebc8cc-aefc-4253-b852-c2c4aa461d4d" />
 </p>
 
-## Post Project Ideas
+## Features Implemented
 
 - Alias the program to create a custom command that is accessible anywhere
-	- [Post Project Implementation #1](mitre-sigma-lookup-tool/post-project-implementation-01-alias)	 
+	- [Feature #1](mitre-sigma-lookup-tool/post-project-implementation-01-alias)	 
 - Handle outputting to files
-	- [Post Project Implementation #2](mitre-sigma-lookup-tool/post-project-implementation-02-handle-file-output) 
+	- [Feature #2](mitre-sigma-lookup-tool/post-project-implementation-02-handle-file-output) 
 - Handle bulk searches and outputs
-	- [Post Project Implementation #3](mitre-sigma-lookup-tool/post-project-implementation-03-bulk-search-output) 
+	- [Feature #3](mitre-sigma-lookup-tool/post-project-implementation-03-bulk-search-output) 
 - Integrate another open-source library mapped to MITRE ATT&CK
-	- [Post Project Implementation #4](mitre-sigma-lookup-tool/post-project-implementation-04-atomic-attack-lib) 
+	- [Feature #4](mitre-sigma-lookup-tool/post-project-implementation-04-atomic-attack-lib) 
 - Use Django to create a web interface (search bar & hosting the site)
-	- [Post Project Implementation #5](mitre-sigma-lookup-tool/post-project-implementation-05-django-web-interface)
+	- [Feature #5](mitre-sigma-lookup-tool/post-project-implementation-05-django-web-interface)
 - Improve the speed of Sigma searches 
-	- [Post Project Implementation #6](mitre-sigma-lookup-tool/post-project-implementation-06-sigma-speed-searches)
+	- [Feature #6](mitre-sigma-lookup-tool/post-project-implementation-06-sigma-speed-searches)
 - Automatically update MITRE and Sigma (which are only accessed locally)
-	- [Post Project Implementation #7](mitre-sigma-lookup-tool/post-project-implementation-07-auto-mitre-sigma-updates)
+	- [Feature #7](mitre-sigma-lookup-tool/post-project-implementation-07-auto-mitre-sigma-updates)
 - Make searching by name or description “smarter” 
-	- [Post Project Implementation #8](mitre-sigma-lookup-tool/post-project-implementation-08-smarter-search)
+	- [Feature #8](mitre-sigma-lookup-tool/post-project-implementation-08-smarter-search)
 - Interface directly with other professional cybersecurity tools
-	- MITRE Caldera - Attack platform for launching TTPs in MITRE ATT&CK
-	- Metasploit - Tool for emulating attacker’s TTPs
 	- Splunk - Open-source SIEM (could implement Sigma rules directly)
+ 		- [Feature #9](mitre-sigma-lookup-tool/post-project-implementation-09-splunk-integration)
+
+## Future Features
+- MITRE Caldera - Attack platform for launching TTPs in MITRE ATT&CK
+- Metasploit - Tool for emulating attacker’s TTPs
