@@ -85,6 +85,10 @@ The Sigma rules tables describes the attempt to find code that can detect phishi
 
 ### Searching by Technique name
 
+```bash
+mitre Masquerading
+```
+
 Instead of searching by Technique ID, we can also search by technique name. I chose `Masquerading (T1036)` where hackers disguise malicious files or activity as something completely harmless (like renaming a piece of malware to svchost.exe so it looks like a built-in Windows service). The mitigations and sigma rules are outputted as well and describe the ways to defend and detect these attacks
 
 For example, we can see that one mitigation technique is `Code Signing (M1045)` where we ensure files have a valid digital signature so hackers can't easily fake standard system utilities
