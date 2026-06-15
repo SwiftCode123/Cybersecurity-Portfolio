@@ -87,11 +87,11 @@ def process_arguments():
     BASE_DIR = Path(__file__).resolve().parent
     
     # Specifies the MITRE ATT&CK STIX dataset file and points to a cloned Sigma rules repository
-    parser.add_argument("--stix", default="enterprise-attack.json", help="Path to enterprise STIX JSON bundle")
-    parser.add_argument("--sigma", default="sigma", help="Path to local Sigma repo (folder)")
+    parser.add_argument("--stix", default=str(BASE_DIR / "enterprise-attack.json"), help="Path to enterprise STIX JSON bundle")
+    parser.add_argument("--sigma", default=str(BASE_DIR / "sigma"), help="Path to local Sigma repo (folder)")
 
     # Specifies where Atomic Red Team test definitions are stored
-    parser.add_argument("--atomics", default="atomic-red-team/atomics", help="Path to the cloned Atomic Red Team atomics folder")
+    parser.add_argument("--atomics", default=str(BASE_DIR / "atomic-red-team" / "atomics"), help="Path to the cloned Atomic Red Team atomics folder")
 
     # Update the ATT&CK STIX dataset and pull the latest Sigma rules
     parser.add_argument("--update", action="store_true", help="Automatically pull latest MITRE and Sigma updates before searching")
