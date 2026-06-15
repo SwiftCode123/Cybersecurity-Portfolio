@@ -6,7 +6,7 @@ chmod +x mitre-attack-sigma.py
 ```
  - Next, I needed to create an alias. Instead of hardcoding the full path manually, I used the `$PWD` environment variable while inside the root of the cloned repository. This automatically captures the absolute path of the current directory and makes setup much easier
 ```bash
-echo "alias mitre=\"\$PWD/venv/bin/python3 \$PWD/mitre-attack-sigma.py\"" >> ~/.zshrc"
+echo "alias mitre=\"\$PWD/venv/bin/python3 \$PWD/mitre-attack-sigma.py\"" >> ~/.zshrc
 ```
 - Since I am in a 	virtual environment and my 		script relies on packages such as `rich` and `yaml` inside my `venv`, a standard alias 		might fail if the virtual environment isn't active. To solve this problem, the alias points directly to the Python interpreter inside the project's `venv`. This ensures the script always uses the correct dependencies without requiring me to manually activate the virtual environment first
 
