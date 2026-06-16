@@ -44,14 +44,18 @@ A Linux environment with Internet access
 	
 ## Setup Environment
 
-The setup process has been automated with `setup.sh`, or you can follow these steps:
+### 1. Navigate to your folder where your scripts are located
+```bash
+cd folder
+```
+- Note: Navigate into the same folder where `mitre-attack-sigma.py' is located
 
-### 1. Create a virtual environment and activate it
+### 2. Create a virtual environment and activate it
 ```bash
 python -m venv venv
 source venv/bin/activate
 ```
-### 2. Install libraries
+### 3. Install libraries
 ```bash
 pip install mitreattack-python pyyaml rich python-dotenv pysigma GitPython pysigma-backend-splunk splunk-sdk
 ```
