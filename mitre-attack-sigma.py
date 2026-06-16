@@ -616,8 +616,9 @@ def run_auto_updates(stix_path: str, sigma_path: str):
 
     # Update Local Sigma Repository
     sigma_dir = Path(sigma_path)
-    if sigma_dir.exists() and (sigma_dir / ".git").exists():
-        console.print(f"[*] Pulling latest Sigma rules inside '{sigma_path}'...")
+    if sigma_dir.exists() and os.path.exists(os.path.join(sigma_path, ".git")):
+        folder_name = Path(sigma_path).name
+        console.print(f"[*] Pulling latest Sigma rules inside '{folder_name}'...")
         try:
             # Opens the existing local repository and calls origin pull
             repo = git.Repo(sigma_path)
