@@ -391,17 +391,17 @@ def translate_sigma_to_spl(sigma_rule_path):
 # whether it should appear in the Splunk UI
 def build_app_conf(author="Dhruv Tripathi"):
     return f"""[ui]
-    is_visible = 1
-    label = MITRE ATT&CK Automated Detection Pack
+is_visible = 1
+label = MITRE ATT&CK Automated Detection Pack
 
-    [launcher]
-    author = {author}
-    description = Automated security monitoring content generated from local Sigma and MITRE lookup tooling.
-    version = 1.0.0
+[launcher]
+author = {author}
+description = Automated security monitoring content generated from local Sigma and MITRE lookup tooling.
+version = 1.0.0
 
-    [package]
-    id = TA-mitre-detection-pack
-    """
+[package]
+id = TA-mitre-detection-pack
+"""
 
 # Loop over all Sigma rules forund for the techniques and 
 # dump them into a single file and Splunk parses this file on 
@@ -425,20 +425,20 @@ def build_savedsearches_conf(compiled_rules):
         escaped_spl = rule['spl'].replace('"', '\\"')
         
         conf_content += f"""[{clean_title}]
-        search = {escaped_spl}
-        dispatch.earliest_time = -15m
-        dispatch.latest_time = now
-        cron_schedule = */5 * * * *
-        enable_sched = 1
-        alert_type = number of events
-        alert_threshold = 0
-        alert_comparator = greater than
-        counttype = number of events
-        alert.suppress = 1
-        alert.suppress.period = 30m
-        action.webhook = 1
-        action.webhook.param.url = https://httpbin.org/post
-        \n"""
+search = {escaped_spl}
+dispatch.earliest_time = -15m
+dispatch.latest_time = now
+cron_schedule = */5 * * * *
+enable_sched = 1
+alert_type = number of events
+alert_threshold = 0
+alert_comparator = greater than
+counttype = number of events
+alert.suppress = 1
+alert.suppress.period = 30m
+action.webhook = 1
+action.webhook.param.url = https://httpbin.org/post
+\n"""
     return conf_content
 
 # Creating the dashboard template that loops through all the selected rules
@@ -450,15 +450,16 @@ Credential Dumping        3 alerts
 Lateral Movement          7 alerts
 """
 def build_dashboard_xml(compiled_rules):
-    panels = ""
+    rows = ""
     for rule in compiled_rules:
         clean_title = f"SIGMA - {rule['attack_id']} - {rule['title']}"
-        panels += f"""
+        rows += f"""
+  <row>
     <panel>
       <title>{clean_title} (Last 24 Hours)</title>
       <single>
         <search>
-          <query>index=_internal sourcetype=scheduler alert_status="fired" savedsearch_name="{clean_title}" | stats count</query>
+          <query><![CDATA[index=_internal sourcetype=scheduler alert_status="fired" savedsearch_name="{clean_title}" | stats count]]></query>
           <earliest>-24h@h</earliest>
           <latest>now</latest>
         </search>
@@ -466,37 +467,46 @@ def build_dashboard_xml(compiled_rules):
         <option name="refresh.display">progressbar</option>
       </single>
     </panel>
+  </row>
 """
 
     return f"""<dashboard version="1.1" theme="dark">
-  <label>MITRE ATT&CK TTP Security Insights Dashboard</label>
+  <label>MITRE ATT&amp;CK TTP Security Insights Dashboard</label>
   <description>Real-time deployment tracker for matched Sigma indicators</description>
-  <row>
-    {panels}
-  </row>
+  {rows}
 </dashboard>
 """
 
 # Makes the app universally readable inside Splunk (System permission)
 def build_default_meta():
-    return """[]
+    return """[default]
 access = read : [ * ], write : [ admin ]
 export = system
+"""
+
+def build_nav_xml():
+    return """<nav color="#006D9C">
+  <view name="search" default="true" />
+  <view name="dashboards" />
+  <view name="alerts" />
+</nav>
 """
 
 def export_splunk_app(compiled_rules, base_output_path="generated_splunk_apps"):
     app_dir = Path(base_output_path) / "TA-mitre-detection-pack"
     default_dir = app_dir / "default"
     views_dir = default_dir / "data" / "ui" / "views"
+    nav_dir = default_dir / "data" / "ui" / "nav"
     metadata_dir = app_dir / "metadata"
     
     # Clean and build directory trees
-    for folder in [views_dir, metadata_dir]:
+    for folder in [views_dir, nav_dir, metadata_dir]:
         folder.mkdir(parents=True, exist_ok=True)
         
     # Write configuration files
     (default_dir / "app.conf").write_text(build_app_conf(), encoding="utf-8")
     (default_dir / "savedsearches.conf").write_text(build_savedsearches_conf(compiled_rules), encoding="utf-8")
+    (nav_dir / "default.xml").write_text(build_nav_xml(), encoding="utf-8")
     (views_dir / "attack_dashboard.xml").write_text(build_dashboard_xml(compiled_rules), encoding="utf-8")
     (metadata_dir / "default.meta").write_text(build_default_meta(), encoding="utf-8")
     
