@@ -53,10 +53,10 @@ source venv/bin/activate
 ```
 ### 2. Install libraries
 ```bash
-pip install mitreattack-python pyyaml rich
+pip install mitreattack-python pyyaml rich python-dotenv pysigma GitPython pysigma-backend-splunk splunk-sdk
 ```
 
-https://mitreattack-python.readthedocs.io/en/latest/
+<!--https://mitreattack-python.readthedocs.io/en/latest/
 ### 3. Download an ATT&CK STIX bundle file (enterprise)
 ```bash
 curl https://raw.githubusercontent.com/mitre-attack/attack-stix-data/refs/heads/master/enterprise-attack/enterprise-attack.json -o enterprise-attack.json
@@ -68,13 +68,13 @@ git clone https://github.com/SigmaHQ/sigma.git
 ### 5. Create a hello world program in `lookup.py`
 ```bash
 echo -e '#!/usr/bin/env python3\nprint("hello world")' > lookup.py
-```
+``` -->
 
 ## Example Usage
 ### Searching by Technique ID
 
 ```bash
-mitre T1566
+python mitre-sigma-lookup-tool T1566
 ```
 
 Below we can see the successful run for Technique ID `T1566`. This printed out a comprehensive description of what phishing is (adversaries sending malicious messages to gain access to victim systems, utilizing social engineering, spearphishing, malicious attachments, or links). It also displayed a mitigation table of how to defend against phising such as `Audit (M1047)`, `Network Intrusion Prevention (M1031)`, `Software Configuration (M1054)`, `Restrict Web-Based Content (M1021)`, `Antivirus/Antimalware (M1049)`, and `User Training (M1017)`. 
@@ -86,7 +86,7 @@ The Sigma rules tables describes the attempt to find code that can detect phishi
 ### Searching by Technique name
 
 ```bash
-mitre Masquerading
+python mitre-sigma-lookup-tool Masquerading
 ```
 
 Instead of searching by Technique ID, we can also search by technique name. I chose `Masquerading (T1036)` where hackers disguise malicious files or activity as something completely harmless (like renaming a piece of malware to svchost.exe so it looks like a built-in Windows service). The mitigations and sigma rules are outputted as well and describe the ways to defend and detect these attacks
