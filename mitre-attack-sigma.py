@@ -126,6 +126,9 @@ def build_sigma_index(sigma_root: Path):
         if p.is_dir() or p.suffix.lower() not in (".yml", ".yaml", ".json"):
             continue
 
+        if "deprecated" in p.parts or "unsupported" in p.parts:
+            continue
+    
         try:
             text = p.read_text(encoding="utf-8", errors="ignore")
         except Exception:
@@ -289,7 +292,7 @@ searches for matching Sigma rules, pulls related Atomic Red Team tests,
 displays everything in formatted console tables, 
 and optionally saves the entire report to a file named after the technique ID
 """
-def generate_single_report(mitre, sigma_root, query, atomics_root, output_dir=None):
+def generate_single_report(mitre, sigma_root, query, atomics_root, output_dir=None, is_bulk=False):
 
     console.record = False
     console.print(f"\n[bold blue]=========================================[/bold blue]")
@@ -320,31 +323,6 @@ def generate_single_report(mitre, sigma_root, query, atomics_root, output_dir=No
     attack_id = get_attack_id(tech, query)
     matches = lookup_sigma_in_index(attack_id) if attack_id else []
     print_sigma_matches(matches)
-    
-    # User choose and deploys the matches sigma rules to Splunk 
-    if matches:
-        console.print(f"\n[bold yellow] Operational SIEM action available for {attack_id}[/bold yellow]")
-        deploy_choice = input("Would you like to deploy any of these matched detection rules to your Splunk VM? (y/N): ").strip().lower()
-        
-        if deploy_choice == 'y':
-            # If there's only one match, just deploy it instantly
-            if len(matches) == 1:
-                deploy_to_splunk(matches[0]["file"], matches[0]["title"])
-            else:
-                # If there are multiple rules found for this technique, let the user choose which one to push
-                console.print("\n[yellow]Select which specific Sigma rule to push live to Proxmox:[/yellow]")
-                for idx, match in enumerate(matches, 1):
-                    console.print(f"  [{idx}] {match['title']}")
-                
-                try:
-                    rule_choice = input(f"\nEnter selection (1-{len(matches)}): ").strip()
-                    rule_idx = int(rule_choice) - 1
-                    if 0 <= rule_idx < len(matches):
-                        deploy_to_splunk(matches[rule_idx]["file"], matches[rule_idx]["title"])
-                    else:
-                        print("Invalid selection number. Skipping deployment.")
-                except ValueError:
-                    print("Invalid input. Skipping deployment.")
         
     console.record = False
     console.print("\n[bold]Fetching simulation tests from Atomic Red Team...[/bold]")
@@ -387,6 +365,8 @@ def generate_single_report(mitre, sigma_root, query, atomics_root, output_dir=No
         console.save_text(str(file_target))
         console.print(f"\n[bold green] Saved to {file_target}[/bold green]")
         console._record_buffer.clear()
+
+    return attack_id, matches
 
 # Load Atomic Red Team tests for a specific MITRE technique
 def get_atomic_tests(atomics_root, attack_id):
@@ -680,11 +660,53 @@ def main():
     # Build the memory index once before starting loop queries
     if sigma_root:
         build_sigma_index(sigma_root)
+        
+    # Check if this is a bulk run up front
+    is_bulk_run = (len(queries) > 1 or bool(args.file))
+        
+    # Queue array to hold items for SIEM deployment queries
+    pending_deployments = []
+
     for q in queries:
         output_folder = args.output_dir
-        generate_single_report(mitre, sigma_root, q, output_dir=output_folder, atomics_root=args.atomics)
+        attack_id, matches = generate_single_report(mitre, sigma_root, q, output_dir=output_folder, atomics_root=args.atomics, is_bulk=is_bulk_run)
+        
+        if attack_id and matches:
+            pending_deployments.append({"id": attack_id, "matches": matches})
 
     console.print("\n[bold green] All techniques processed successfully[/bold green]")
+
+    # Run report SIEM interaction questions if rules matched
+    if pending_deployments:
+        console.print(f"\n[bold blue]=========================================[/bold blue]")
+        console.print("[bold]Starting post-report SIEM deployment queue...[/bold]")
+        
+        for item in pending_deployments:
+            attack_id = item["id"]
+            matches = item["matches"]
+            
+            console.print(f"\n[bold yellow] Operational SIEM action available for {attack_id}[/bold yellow]")
+            deploy_choice = input("Would you like to deploy any of these matched detection rules to your Splunk VM? (y/N): ").strip().lower()
+            
+            if deploy_choice == 'y':
+                # If there's only one match, just deploy it instantly
+                if len(matches) == 1:
+                    deploy_to_splunk(matches[0]["file"], matches[0]["title"])
+                else:
+                    # If there are multiple rules found for this technique, let the user choose which one to push
+                    console.print("\n[yellow]Select which specific Sigma rule to push live to Proxmox:[/yellow]")
+                    for idx, match in enumerate(matches, 1):
+                        console.print(f"  [{idx}] {match['title']}")
+                    
+                    try:
+                        rule_choice = input(f"\nEnter selection (1-{len(matches)}): ").strip()
+                        rule_idx = int(rule_choice) - 1
+                        if 0 <= rule_idx < len(matches):
+                            deploy_to_splunk(matches[rule_idx]["file"], matches[rule_idx]["title"])
+                        else:
+                            print("Invalid selection number. Skipping deployment.")
+                    except ValueError:
+                        print("Invalid input. Skipping deployment.")
 
 if __name__ == "__main__":
     main()
