@@ -33,6 +33,9 @@ console = Console(record=True)
 # library for accessing MITRE ATT&CK data
 from mitreattack.stix20 import MitreAttackData
 
+# For Splunk App generation
+import shutil
+
 ATTACK_ID_RE = re.compile(r"T\d{4}(?:\.\d{3})?", re.IGNORECASE)
 # T\d{4}        -> Matchs "T" followed by 4 digits so from T0000 to T9999
 # (?:\.\d{3})?  -> Matches "." followed by 3 digits or nothing (.000 to .999), opt.
@@ -372,6 +375,140 @@ def generate_single_report(mitre, sigma_root, query, atomics_root, output_dir=No
 
     return attack_id, matches
 
+# Helper to convert a single Sigma rule file into a Splunk SPL string
+def translate_sigma_to_spl(sigma_rule_path):
+    try:
+        with open(sigma_rule_path, "r", encoding="utf-8") as f:
+            rule_yaml = f.read()
+        rule = SigmaRule.from_yaml(rule_yaml)
+        backend = SplunkBackend()
+        spl_queries = backend.convert_rule(rule)
+        return spl_queries[0] if spl_queries else None
+    except Exception:
+        return None
+    
+# Tells Splunk what the app is, who wrote it and 
+# whether it should appear in the Splunk UI
+def build_app_conf(author="Dhruv Tripathi"):
+    return f"""[ui]
+    is_visible = 1
+    label = MITRE ATT&CK Automated Detection Pack
+
+    [launcher]
+    author = {author}
+    description = Automated security monitoring content generated from local Sigma and MITRE lookup tooling.
+    version = 1.0.0
+
+    [package]
+    id = TA-mitre-detection-pack
+    """
+
+# Loop over all Sigma rules forund for the techniques and 
+# dump them into a single file and Splunk parses this file on 
+# startup to instantiate all the alerts
+"""
+Example
+{
+    "title": "PowerShell Download",
+    "attack_id": "T1059",
+    "spl": "index=windows ..."
+}
+is turned into
+[SIGMA - T1059 - PowerShell Download]
+search = index=windows ...
+"""
+def build_savedsearches_conf(compiled_rules):
+    conf_content = ""
+    for rule in compiled_rules:
+        clean_title = f"SIGMA - {rule['attack_id']} - {rule['title']}"
+        # Escape any double quotes in the SPL for safe conf file rendering
+        escaped_spl = rule['spl'].replace('"', '\\"')
+        
+        conf_content += f"""[{clean_title}]
+        search = {escaped_spl}
+        dispatch.earliest_time = -15m
+        dispatch.latest_time = now
+        cron_schedule = */5 * * * *
+        enable_sched = 1
+        alert_type = number of events
+        alert_threshold = 0
+        alert_comparator = greater than
+        counttype = number of events
+        alert.suppress = 1
+        alert.suppress.period = 30m
+        action.webhook = 1
+        action.webhook.param.url = https://httpbin.org/post
+        \n"""
+    return conf_content
+
+# Creating the dashboard template that loops through all the selected rules
+# and builds a panel grid/summary log panel of alert firings
+"""
+Example
+PowerShell Download      12 alerts
+Credential Dumping        3 alerts
+Lateral Movement          7 alerts
+"""
+def build_dashboard_xml(compiled_rules):
+    panels = ""
+    for rule in compiled_rules:
+        clean_title = f"SIGMA - {rule['attack_id']} - {rule['title']}"
+        panels += f"""
+    <panel>
+      <title>{clean_title} (Last 24 Hours)</title>
+      <single>
+        <search>
+          <query>index=_internal sourcetype=scheduler alert_status="fired" savedsearch_name="{clean_title}" | stats count</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </single>
+    </panel>
+"""
+
+    return f"""<dashboard version="1.1" theme="dark">
+  <label>MITRE ATT&CK TTP Security Insights Dashboard</label>
+  <description>Real-time deployment tracker for matched Sigma indicators</description>
+  <row>
+    {panels}
+  </row>
+</dashboard>
+"""
+
+# Makes the app universally readable inside Splunk (System permission)
+def build_default_meta():
+    return """[]
+access = read : [ * ], write : [ admin ]
+export = system
+"""
+
+def export_splunk_app(compiled_rules, base_output_path="generated_splunk_apps"):
+    app_dir = Path(base_output_path) / "TA-mitre-detection-pack"
+    default_dir = app_dir / "default"
+    views_dir = default_dir / "data" / "ui" / "views"
+    metadata_dir = app_dir / "metadata"
+    
+    # Clean and build directory trees
+    for folder in [views_dir, metadata_dir]:
+        folder.mkdir(parents=True, exist_ok=True)
+        
+    # Write configuration files
+    (default_dir / "app.conf").write_text(build_app_conf(), encoding="utf-8")
+    (default_dir / "savedsearches.conf").write_text(build_savedsearches_conf(compiled_rules), encoding="utf-8")
+    (views_dir / "attack_dashboard.xml").write_text(build_dashboard_xml(compiled_rules), encoding="utf-8")
+    (metadata_dir / "default.meta").write_text(build_default_meta(), encoding="utf-8")
+    
+    # Package it as a tar.gz / .spl file so it can be uploaded through the Splunk UI
+    archive_name = shutil.make_archive(str(app_dir), 'gztar', root_dir=app_dir.parent, base_dir=app_dir.name)
+    
+    # Rename .tar.gz extension to .spl
+    spl_app_package = Path(archive_name).with_suffix('.spl')
+    Path(archive_name).rename(spl_app_package)
+    
+    print(f"[+] Clean Splunk App compilation complete. Download package: {spl_app_package}")
+
 # Load Atomic Red Team tests for a specific MITRE technique
 def get_atomic_tests(atomics_root, attack_id):
 
@@ -680,37 +817,72 @@ def main():
 
     console.print("\n[bold green] All techniques processed successfully[/bold green]")
 
-    # Run report SIEM interaction questions if rules matched
+    # If the tool successfully matched detection patterns, prompt the deployment manager
     if pending_deployments:
         console.print(f"\n[bold blue]=========================================[/bold blue]")
-        console.print("[bold]Starting post-report SIEM deployment queue...[/bold]")
+        console.print("[bold]Deployment Action Options Menu:[/bold]")
+        console.print("  [1] Interactive Deployment Queue (Push individual rules to live Splunk API)")
+        console.print("  [2] Automated App Factory (Compile all matches into an installable Splunk App package)")
+        console.print("  [3] Skip operational steps and exit")
         
-        for item in pending_deployments:
-            attack_id = item["id"]
-            matches = item["matches"]
+        try:
+            action_choice = input("\nSelect deployment choice (1-3): ").strip()
+        except (KeyboardInterrupt, EOFError):
+            sys.exit(0)
+        
+        # Go through every matched item and ask the user for deployment
+        if action_choice == '1':
+            for item in pending_deployments:
+                attack_id = item["id"]
+                matches = item["matches"]
+                
+                console.print(f"\n[bold yellow] Operational SIEM action available for {attack_id}[/bold yellow]")
+                deploy_choice = input("Would you like to deploy any of these matched detection rules to your Splunk VM? (y/N): ").strip().lower()
+                
+                # If there is only one matching rule
+                if deploy_choice == 'y':
+                    if len(matches) == 1:
+                        deploy_to_splunk(matches[0]["file"], matches[0]["title"])
+                    else:
+                        console.print("\n[yellow]Select which specific Sigma rule to push live to Proxmox:[/yellow]")
+                        for idx, match in enumerate(matches, 1):
+                            console.print(f"  [{idx}] {match['title']}")
+                        
+                        try:
+                            rule_choice = input(f"\nEnter selection (1-{len(matches)}): ").strip()
+                            rule_idx = int(rule_choice) - 1
+                            if 0 <= rule_idx < len(matches):
+                                deploy_to_splunk(matches[rule_idx]["file"], matches[rule_idx]["title"])
+                            else:
+                                print("Invalid selection number. Skipping deployment.")
+                        except ValueError:
+                            print("Invalid input. Skipping deployment.")
+                            
+        # Create an empty list, loop through every matched Sigma rule,
+        # and convert each into a Splunk query search and create the Splunk App
+        # package containing all translated rules
+        elif action_choice == '2':
+            console.print("\n[*] Initializing backend translation for all matched rules...")
+            app_rules_pool = []
             
-            console.print(f"\n[bold yellow] Operational SIEM action available for {attack_id}[/bold yellow]")
-            deploy_choice = input("Would you like to deploy any of these matched detection rules to your Splunk VM? (y/N): ").strip().lower()
+            for item in pending_deployments:
+                attack_id = item["id"]
+                for match in item["matches"]:
+                    spl_query = translate_sigma_to_spl(match["file"])
+                    if spl_query:
+                        app_rules_pool.append({
+                            "attack_id": attack_id,
+                            "title": match["title"],
+                            "spl": spl_query
+                        })
             
-            if deploy_choice == 'y':
-                # If there's only one match, just deploy it instantly
-                if len(matches) == 1:
-                    deploy_to_splunk(matches[0]["file"], matches[0]["title"])
-                else:
-                    # If there are multiple rules found for this technique, let the user choose which one to push
-                    console.print("\n[yellow]Select which specific Sigma rule to push live to Proxmox:[/yellow]")
-                    for idx, match in enumerate(matches, 1):
-                        console.print(f"  [{idx}] {match['title']}")
-                    
-                    try:
-                        rule_choice = input(f"\nEnter selection (1-{len(matches)}): ").strip()
-                        rule_idx = int(rule_choice) - 1
-                        if 0 <= rule_idx < len(matches):
-                            deploy_to_splunk(matches[rule_idx]["file"], matches[rule_idx]["title"])
-                        else:
-                            print("Invalid selection number. Skipping deployment.")
-                    except ValueError:
-                        print("Invalid input. Skipping deployment.")
+            if app_rules_pool:
+                export_splunk_app(app_rules_pool, args.output_dir)
+            else:
+                console.print("[red]No Sigma rules were successfully translated into SPL. App creation aborted.[/red]")
+                
+        else:
+            console.print("[blue]Exiting search routine smoothly.[/blue]")
 
 if __name__ == "__main__":
     main()
