@@ -109,7 +109,7 @@ This addition extends the project by introducing a Splunk App Factory mode. Inst
 
 ### Demo
 ```bash
-mitre T1059,T1003,T1566 -o my_test_results
+mitre T1555 -o my_test_results
 ```
 
 ## Summary
