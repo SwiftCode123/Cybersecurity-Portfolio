@@ -680,7 +680,7 @@ def main():
     if sigma_root:
         build_sigma_index(sigma_root)
     for q in queries:
-        output_folder = args.output_dir if (len(queries) > 1 or args.file) else None
+        output_folder = args.output_dir
         generate_single_report(mitre, sigma_root, q, output_dir=output_folder, atomics_root=args.atomics)
 
     console.print("\n[bold green] All techniques processed successfully[/bold green]")
