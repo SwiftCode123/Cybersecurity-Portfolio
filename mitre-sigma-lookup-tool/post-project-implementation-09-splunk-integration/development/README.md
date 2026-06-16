@@ -104,5 +104,13 @@ exit code=0
 ```
 - This last line indicated that the alert action script was compeleted successfully with no errors
 
+## Splunk App
+This addition extends the project by introducing a Splunk App Factory mode. Instead of deploying individual detections through the Splunk API, the tool can now compile all matched Sigma rules into a complete Splunk application, including scheduled searches, alerts, and a monitoring dashboard. The generated content is automatically packaged into a `.spl` file, allowing the entire detection set to be imported into Splunk through the App Management interface in a single step (see `mitre-attack-sigma.py` for such changes)
+
+### Demo
+```bash
+mitre T1059,T1003,T1566 -o my_test_results
+```
+
 ## Summary
 - This project builds an automated security detection pipeline that connects open source detection rules with Splunk. It runs in a local Python environment on macOS and uses pySigma to convert Sigma rules (such as detecting LSASS memory dumping) into Splunk search queries. The script connects to a Splunk system through its REST API on port 8089, running inside an isolated Ubuntu VM in a Proxmox homelab. It then automatically creates a scheduled alert in Splunk that triggers when matching activity is found. When tested with sample log data, Splunk successfully ran the detection and sent a webhook alert to an external test service (`httpbin.org/post`), returning HTTP 200 and exit code 0, showing that the full pipeline works correctly from detection rule to alert
