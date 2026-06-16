@@ -48,7 +48,7 @@ A Linux environment with Internet access
 ```bash
 cd folder
 ```
-- Note: Navigate into the same folder where `mitre-attack-sigma.py' is located
+- Note: Navigate into the same folder where `mitre-attack-sigma.py` is located
 
 ### 2. Create a virtual environment and activate it
 ```bash
