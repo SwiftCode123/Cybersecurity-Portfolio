@@ -295,16 +295,20 @@ and optionally saves the entire report to a file named after the technique ID
 def generate_single_report(mitre, sigma_root, query, atomics_root, output_dir=None, is_bulk=False):
 
     console.record = False
-    console.print(f"\n[bold blue]=========================================[/bold blue]")
-    console.print(f"[bold]Processing technique for:[/bold] {query}")
-    console.record = True
+    console._record_buffer.clear()
     
     # Look up the technique in MITRE ATT&CK data
     tech = find_technique(mitre, query)
     if not tech:
         console.print(f"[red]Technique '{query}' not found[/red]")
-        return  
-    
+        return None, []
+
+    console._record_buffer.clear()
+
+    console.record = True
+    console.print(f"\n[bold blue]=========================================[/bold blue]")
+    console.print(f"[bold]Processing technique for:[/bold] {query}")
+
     print_technique_summary(tech)
     
     console.record = False
