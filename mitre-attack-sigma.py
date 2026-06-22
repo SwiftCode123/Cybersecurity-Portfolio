@@ -19,6 +19,7 @@ from dotenv import load_dotenv
 import splunklib.client as client
 from sigma.rule import SigmaRule
 from sigma.backends.splunk import SplunkBackend
+from collections import defaultdict
 
 import urllib.request
 # From the GitPython library
@@ -450,21 +451,60 @@ Credential Dumping        3 alerts
 Lateral Movement          7 alerts
 """
 def build_dashboard_xml(compiled_rules):
-    rows = ""
+    # Group rules by their ATT&CK ID
+    grouped_techniques = defaultdict(list)
     for rule in compiled_rules:
-        clean_title = f"SIGMA - {rule['attack_id']} - {rule['title']}"
-        rows += f"""
+        grouped_techniques[rule['attack_id']].append(rule)
+        
+    rows_xml = ""
+    
+    # Build a row for each technique ID
+    for attack_id, rules in grouped_techniques.items():
+        # Build an OR query that checks for any of the saved searches matching this TTP
+        search_clauses = " OR ".join([f'savedsearch_name="SIGMA - {r["attack_id"]} - {r["title"]}"' for r in rules])
+        
+        # Make a name for the first rule match
+        display_title = f"{attack_id} | Security Indicators Summary"
+        
+        rows_xml += f"""
   <row>
     <panel>
-      <title>{clean_title} (Last 24 Hours)</title>
+      <title>{display_title}</title>
+      
+      <!-- 24 hour aggregated event count -->
       <single>
         <search>
-          <query><![CDATA[index=_internal sourcetype=scheduler alert_status="fired" savedsearch_name="{clean_title}" | stats count]]></query>
+          <query><![CDATA[index=_internal sourcetype=scheduler alert_status="fired" ({search_clauses}) | stats count]]></query>
           <earliest>-24h@h</earliest>
           <latest>now</latest>
         </search>
+        <option name="underLabel">Total Triggers (24h)</option>
+        <option name="useColors">1</option>
+        <option name="rangeColors">["#73a550","#f2b827","#d93a3a"]</option>
+        <option name="rangeValues">[1,5]</option>
         <option name="drilldown">none</option>
-        <option name="refresh.display">progressbar</option>
+      </single>
+
+      <!-- 7 day trend -->
+      <single>
+        <search>
+          <query><![CDATA[index=_internal sourcetype=scheduler alert_status="fired" ({search_clauses}) | stats count | appendcols [ search index=_internal sourcetype=scheduler alert_status="fired" ({search_clauses}) | timechart span=2h count ]]]></query>
+          <earliest>-7d@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="underLabel">7-Day Trend</option>
+        <option name="drilldown">none</option>
+      </single>
+
+      <!-- Most active triggered alert definition -->
+      <single>
+        <search>
+          <query><![CDATA[index=_internal sourcetype=scheduler alert_status="fired" ({search_clauses}) | top limit=1 savedsearch_name | fields + savedsearch_name]]></query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="underLabel">Top Active Rule</option>
+        <option name="drilldown">none</option>
       </single>
     </panel>
   </row>
@@ -472,8 +512,8 @@ def build_dashboard_xml(compiled_rules):
 
     return f"""<dashboard version="1.1" theme="dark">
   <label>MITRE ATT&amp;CK TTP Security Insights Dashboard</label>
-  <description>Real-time deployment tracker for matched Sigma indicators</description>
-  {rows}
+  <description>Consolidated Technique-Level Performance Monitoring</description>
+  {rows_xml}
 </dashboard>
 """
 
