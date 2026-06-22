@@ -112,5 +112,12 @@ This addition extends the project by introducing a Splunk App Factory mode. Inst
 mitre T1555 -o my_test_results
 ```
 
-## Summary
-- This project builds an automated security detection pipeline that connects open source detection rules with Splunk. It runs in a local Python environment on macOS and uses pySigma to convert Sigma rules (such as detecting LSASS memory dumping) into Splunk search queries. The script connects to a Splunk system through its REST API on port 8089, running inside an isolated Ubuntu VM in a Proxmox homelab. It then automatically creates a scheduled alert in Splunk that triggers when matching activity is found. When tested with sample log data, Splunk successfully ran the detection and sent a webhook alert to an external test service (`httpbin.org/post`), returning HTTP 200 and exit code 0, showing that the full pipeline works correctly from detection rule to alert
+<img width="4164" height="1176" alt="image" src="https://github.com/user-attachments/assets/6f53d111-c0d6-46bf-8ed2-f7f57180ecd8" />
+
+- I clicked `Manage` on the main menu under `Apps` and then clicked `Install App From File` to upload my `.spl` file
+
+<img width="1141" height="598" alt="image" src="https://github.com/user-attachments/assets/05ee203a-d673-418a-bc09-75144f017e24" />
+
+- We see the success message
+
+<img width="1512" height="827" alt="image" src="https://github.com/user-attachments/assets/0b9aaa40-4a99-4e2b-b5ec-80d2b7b7e092" />
