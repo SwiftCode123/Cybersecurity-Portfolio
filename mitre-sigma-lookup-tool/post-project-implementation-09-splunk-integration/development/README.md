@@ -109,7 +109,7 @@ This addition extends the project by introducing a Splunk App Factory mode. Inst
 
 ### Demo
 ```bash
-mitre T1555 -o my_test_results
+mitre T1059.003 -o my_test_results
 ```
 
 <img width="4164" height="1176" alt="image" src="https://github.com/user-attachments/assets/6f53d111-c0d6-46bf-8ed2-f7f57180ecd8" />
@@ -121,3 +121,29 @@ mitre T1555 -o my_test_results
 - We see the success message
 
 <img width="1512" height="827" alt="image" src="https://github.com/user-attachments/assets/0b9aaa40-4a99-4e2b-b5ec-80d2b7b7e092" />
+
+- You can see my app was installed successfully :D
+
+<img width="1210" height="663" alt="image" src="https://github.com/user-attachments/assets/26061781-658b-41a3-807d-9731e2862377" />
+
+- Now, since my Splunk instance isn't actually consuming any logs, I created a fake malicious process
+
+<img width="1512" height="826" alt="image" src="https://github.com/user-attachments/assets/de688bba-4e09-46ee-8228-f36067fa3e4a" />
+
+- Then, I went to edit the cron schedule to `* * * * *` so it would get triggered every minute (for test purposes). I then saved and clicked `View triggered alerts via Triggered Alerts`
+
+<img width="1512" height="829" alt="image" src="https://github.com/user-attachments/assets/8aff03ce-7697-4636-a236-3231f6e390dd" />
+
+- We can see the alert was triggered successfully
+
+<img width="1512" height="826" alt="image" src="https://github.com/user-attachments/assets/1ebcc200-21f1-4d5c-b2f2-02a2c0b01dcc" />
+
+- When we click on the dashboard, we can see how populated it is
+
+<img width="1208" height="662" alt="image" src="https://github.com/user-attachments/assets/b7235061-2548-4b18-87d3-e899e6585572" />
+
+- `1` is the total alert triggers. Before testing this specific ID, I also ran `T1555` for test purposes and we can see in `4`, `T1555` ran 15 times while `T1059.003` only ran 1 time. I also added a unique ATT&CK technique counter (`2`) and the most active technique which in this case was `T1555` obviously.
+
+<img width="1512" height="624" alt="image" src="https://github.com/user-attachments/assets/fb590907-0b6c-4fc9-925d-2f8288db47bc" />
+
+- Furthermore, if I scroll down, you can also see the recent detection activity filled with the `time` and `savedsearch_name` columns. Lastly, you have the trigger count and this is only 1 because I didn't run anything after (I my alert suppress period for 30 minutes so it did not fire again at the time of this writing), the 7 day trend and the top rule which is `T1059.003`
