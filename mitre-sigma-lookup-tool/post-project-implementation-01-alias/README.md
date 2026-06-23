@@ -6,7 +6,7 @@ chmod +x mitre-attack-sigma.py
 ```
  - Next, I was in my virtual environment, `venv` and ran the command below.   Since I am in a 	virtual environment and my 		script relies on packages such as `rich` and `yaml` inside my `venv`, a standard alias 		might fail if the virtual environment isn't active and this command fixes that issue
 ```bash
-echo "alias mitre=\"\$(pwd)/venv/bin/python3 \$(pwd)/mitre-attack-sigma.py\"" >> ~/.zshrc && source ~/.zshrc
+echo "alias mitre=\"\$(pwd)/venv/bin/python3 \$(pwd)/mitre-attack-sigma.py\"" >> ~/.zshrc
 ```
 - Run this to apply the changes
 ```bash
