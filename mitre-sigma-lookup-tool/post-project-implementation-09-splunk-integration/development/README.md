@@ -23,7 +23,7 @@ pip install splunk-sdk pysigma pysigma-backend-splunk
 <img width="1015" height="702" alt="image" src="https://github.com/user-attachments/assets/721c7c86-6256-4f2e-99e3-0f85e17ef881" />
 
 
-## Demo
+# Demo
 - For demo purposes, I chose the `T1003` ATT&CK ID (OS Credential Dumping). I ran the command `mitre T1003` and hit `y` when asked
 
 <img width="1246" height="546" alt="image" src="https://github.com/user-attachments/assets/9b3a239a-1c64-42df-b64d-59ab501042ed" />
