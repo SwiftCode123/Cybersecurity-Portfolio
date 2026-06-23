@@ -57,6 +57,7 @@
 
 ## Performance Comparison Demo
 Original Implementation
+  - Note: Refresh the page if the bottom two videos do not load
 
 https://github.com/user-attachments/assets/454be4ee-ed8e-49f0-a785-31c9f2040851
 
