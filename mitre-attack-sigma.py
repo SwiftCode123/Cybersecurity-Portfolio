@@ -272,13 +272,15 @@ def deploy_to_splunk(sigma_rule_path, rule_title):
                 name=clean_title,
                 search=splunk_spl,
                 **{
-                    "is_scheduled": 1, # Runs automatically instead of the user clicking "Run Search"               
-                    "cron_schedule": "*/5 * * * *", # Runs every 5 minutes
+                    "is_scheduled": 1,
+                    "cron_schedule": "*/5 * * * *",
                     "alert_type": "number of events",
-                    "alert_threshold": "0",
-                    "alert_comparator": "greater than",   
-                    "actions": "webhook", 
-                    "action.webhook.param.url": "https://httpbin.org/post"  
+                    "alert_threshold": 0,
+                    "alert_comparator": "greater than",
+                    "alert.track":1,
+                    "alert.actions": "webhook",
+                    "action.webhook": 1,
+                    "action.webhook.param.url": "https://httpbin.org/post"
                 }
             )
             
@@ -422,8 +424,7 @@ def build_savedsearches_conf(compiled_rules):
     conf_content = ""
     for rule in compiled_rules:
         clean_title = f"SIGMA - {rule['attack_id']} - {rule['title']}"
-        # Escape any double quotes in the SPL for safe conf file rendering
-        escaped_spl = rule['spl'].replace('"', '\\"')
+        escaped_spl = rule['spl']
         
         conf_content += f"""[{clean_title}]
 search = {escaped_spl}
@@ -450,72 +451,263 @@ PowerShell Download      12 alerts
 Credential Dumping        3 alerts
 Lateral Movement          7 alerts
 """
+from collections import defaultdict
+
+
 def build_dashboard_xml(compiled_rules):
-    # Group rules by their ATT&CK ID
     grouped_techniques = defaultdict(list)
+
     for rule in compiled_rules:
-        grouped_techniques[rule['attack_id']].append(rule)
-        
-    rows_xml = ""
-    
-    # Build a row for each technique ID
+        grouped_techniques[rule["attack_id"]].append(rule)
+
+    technique_rows = ""
+
     for attack_id, rules in grouped_techniques.items():
-        # Build an OR query that checks for any of the saved searches matching this TTP
-        search_clauses = " OR ".join([f'savedsearch_name="SIGMA - {r["attack_id"]} - {r["title"]}"' for r in rules])
-        
-        # Make a name for the first rule match
-        display_title = f"{attack_id} | Security Indicators Summary"
-        
-        rows_xml += f"""
-  <row>
-    <panel>
-      <title>{display_title}</title>
-      
-      <!-- 24 hour aggregated event count -->
-      <single>
-        <search>
-          <query><![CDATA[index=_internal sourcetype=scheduler alert_status="fired" ({search_clauses}) | stats count]]></query>
-          <earliest>-24h@h</earliest>
-          <latest>now</latest>
-        </search>
-        <option name="underLabel">Total Triggers (24h)</option>
-        <option name="useColors">1</option>
-        <option name="rangeColors">["#73a550","#f2b827","#d93a3a"]</option>
-        <option name="rangeValues">[1,5]</option>
-        <option name="drilldown">none</option>
-      </single>
 
-      <!-- 7 day trend -->
-      <single>
-        <search>
-          <query><![CDATA[index=_internal sourcetype=scheduler alert_status="fired" ({search_clauses}) | stats count | appendcols [ search index=_internal sourcetype=scheduler alert_status="fired" ({search_clauses}) | timechart span=2h count ]]]></query>
-          <earliest>-7d@h</earliest>
-          <latest>now</latest>
-        </search>
-        <option name="underLabel">7-Day Trend</option>
-        <option name="drilldown">none</option>
-      </single>
+        search_clauses = " OR ".join(
+            [
+                f'savedsearch_name="SIGMA - {r["attack_id"]} - {r["title"]}"'
+                for r in rules
+            ]
+        )
 
-      <!-- Most active triggered alert definition -->
-      <single>
-        <search>
-          <query><![CDATA[index=_internal sourcetype=scheduler alert_status="fired" ({search_clauses}) | top limit=1 savedsearch_name | fields + savedsearch_name]]></query>
-          <earliest>-24h@h</earliest>
-          <latest>now</latest>
-        </search>
-        <option name="underLabel">Top Active Rule</option>
-        <option name="drilldown">none</option>
-      </single>
-    </panel>
-  </row>
+        technique_rows += f"""
+<row>
+  <panel>
+    <title>{attack_id} - Trigger Count (24h)</title>
+    <single>
+      <search>
+        <query><![CDATA[
+index=_internal sourcetype=scheduler alert_actions="webhook"
+({search_clauses})
+| stats count
+        ]]></query>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </search>
+      <option name="underLabel">Total Triggers</option>
+      <option name="useColors">1</option>
+      <option name="rangeColors">["#2ECC71","#F1C40F","#E67E22","#E74C3C"]</option>
+      <option name="rangeValues">[1,10,50]</option>
+    </single>
+  </panel>
+
+  <panel>
+    <title>{attack_id} - 7 Day Trend</title>
+    <chart>
+      <search>
+        <query><![CDATA[
+index=_internal sourcetype=scheduler alert_actions="webhook"
+({search_clauses})
+| timechart span=6h count
+        ]]></query>
+        <earliest>-7d@d</earliest>
+        <latest>now</latest>
+      </search>
+
+      <option name="charting.chart">line</option>
+      <option name="charting.legend.placement">bottom</option>
+    </chart>
+  </panel>
+</row>
+
+<row>
+  <panel>
+    <title>{attack_id} - Top Rule</title>
+    <table>
+      <search>
+        <query><![CDATA[
+index=_internal sourcetype=scheduler alert_actions="webhook"
+({search_clauses})
+| stats count by savedsearch_name
+| sort -count
+| head 5
+        ]]></query>
+        <earliest>-30d@d</earliest>
+        <latest>now</latest>
+      </search>
+    </table>
+  </panel>
+</row>
 """
 
-    return f"""<dashboard version="1.1" theme="dark">
-  <label>MITRE ATT&amp;CK TTP Security Insights Dashboard</label>
-  <description>Consolidated Technique-Level Performance Monitoring</description>
-  {rows_xml}
+    dashboard_xml = f"""
+<dashboard version="1.1" theme="dark">
+
+<label>MITRE ATT&amp;CK Security Operations Dashboard</label>
+
+<description>
+Executive ATT&amp;CK monitoring dashboard generated from Sigma detections.
+</description>
+
+<!-- Overview of KPIs -->
+
+<row>
+
+  <panel>
+    <title>Total Alert Triggers (24h)</title>
+    <single>
+      <search>
+        <query><![CDATA[
+index=_internal sourcetype=scheduler alert_actions="webhook"
+| stats count
+        ]]></query>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </search>
+
+      <option name="underLabel">Alerts Fired</option>
+      <option name="useColors">1</option>
+      <option name="rangeColors">["#2ECC71","#F1C40F","#E67E22","#E74C3C"]</option>
+      <option name="rangeValues">[10,100,500]</option>
+    </single>
+  </panel>
+
+  <panel>
+    <title>Unique ATT&amp;CK Techniques</title>
+    <single>
+      <search>
+        <query><![CDATA[
+index=_internal sourcetype=scheduler alert_actions="webhook"
+| rex field=savedsearch_name "SIGMA - (?<technique>T\\d+)"
+| stats dc(technique) as techniques
+        ]]></query>
+        <earliest>-30d@d</earliest>
+        <latest>now</latest>
+      </search>
+    </single>
+  </panel>
+
+  <panel>
+    <title>Most Active Technique</title>
+    <single>
+      <search>
+        <query><![CDATA[
+index=_internal sourcetype=scheduler alert_actions="webhook"
+| rex field=savedsearch_name "SIGMA - (?<technique>T\\d+)"
+| stats count by technique
+| sort -count
+| head 1
+| fields technique
+        ]]></query>
+        <earliest>-30d@d</earliest>
+        <latest>now</latest>
+      </search>
+    </single>
+  </panel>
+
+</row>
+
+<!-- Alert Trend -->
+
+<row>
+  <panel>
+    <title>Alert Activity Trend</title>
+
+    <chart>
+      <search>
+        <query><![CDATA[
+index=_internal sourcetype=scheduler alert_actions="webhook"
+| timechart span=1h count
+        ]]></query>
+
+        <earliest>-7d@d</earliest>
+        <latest>now</latest>
+      </search>
+
+      <option name="charting.chart">line</option>
+      <option name="charting.legend.placement">bottom</option>
+    </chart>
+  </panel>
+</row>
+
+<!-- Top ATT&CK techniques -->
+
+<row>
+
+  <panel>
+    <title>Top ATT&amp;CK Techniques</title>
+
+    <chart>
+      <search>
+        <query><![CDATA[
+index=_internal sourcetype=scheduler alert_actions="webhook"
+| rex field=savedsearch_name "SIGMA - (?<technique>T\\d+)"
+| stats count by technique
+| sort -count
+| head 10
+        ]]></query>
+
+        <earliest>-30d@d</earliest>
+        <latest>now</latest>
+      </search>
+
+      <option name="charting.chart">bar</option>
+    </chart>
+
+  </panel>
+
+</row>
+
+<!-- Top most triggered rules -->
+
+<row>
+
+  <panel>
+    <title>Most Triggered Rules</title>
+
+    <chart>
+      <search>
+        <query><![CDATA[
+index=_internal sourcetype=scheduler alert_actions="webhook"
+| stats count by savedsearch_name
+| sort -count
+| head 10
+        ]]></query>
+
+        <earliest>-30d@d</earliest>
+        <latest>now</latest>
+      </search>
+
+      <option name="charting.chart">bar</option>
+    </chart>
+
+  </panel>
+
+</row>
+
+<!-- Recent Alerts -->
+
+<row>
+
+  <panel>
+    <title>Recent Detection Activity</title>
+
+    <table>
+      <search>
+        <query><![CDATA[
+index=_internal sourcetype=scheduler alert_actions="webhook"
+| table _time savedsearch_name result_count
+| sort -_time
+        ]]></query>
+
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </search>
+    </table>
+
+  </panel>
+
+</row>
+
+<!-- Technique Detail Sections -->
+
+{technique_rows}
+
 </dashboard>
 """
+
+    return dashboard_xml
 
 # Makes the app universally readable inside Splunk (System permission)
 def build_default_meta():
