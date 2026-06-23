@@ -436,8 +436,10 @@ alert_type = number of events
 alert_threshold = 0
 alert_comparator = greater than
 counttype = number of events
+alert.track = 1
+alert.actions = webhook
 alert.suppress = 1
-alert.suppress.period = 30m
+alert.suppress.period = 1m
 action.webhook = 1
 action.webhook.param.url = https://httpbin.org/post
 \n"""
@@ -569,7 +571,7 @@ index=_internal sourcetype=scheduler alert_actions="webhook"
       <search>
         <query><![CDATA[
 index=_internal sourcetype=scheduler alert_actions="webhook"
-| rex field=savedsearch_name "SIGMA - (?<technique>T\\d+)"
+| rex field=savedsearch_name "SIGMA - (?<technique>T\\d+(?:\\.\\d+)?)"
 | stats dc(technique) as techniques
         ]]></query>
         <earliest>-30d@d</earliest>
@@ -584,7 +586,7 @@ index=_internal sourcetype=scheduler alert_actions="webhook"
       <search>
         <query><![CDATA[
 index=_internal sourcetype=scheduler alert_actions="webhook"
-| rex field=savedsearch_name "SIGMA - (?<technique>T\\d+)"
+| rex field=savedsearch_name "SIGMA - (?<technique>T\\d+(?:\\.\\d+)?)"
 | stats count by technique
 | sort -count
 | head 1
@@ -632,7 +634,7 @@ index=_internal sourcetype=scheduler alert_actions="webhook"
       <search>
         <query><![CDATA[
 index=_internal sourcetype=scheduler alert_actions="webhook"
-| rex field=savedsearch_name "SIGMA - (?<technique>T\\d+)"
+| rex field=savedsearch_name "SIGMA - (?<technique>T\\d+(?:\\.\\d+)?)"
 | stats count by technique
 | sort -count
 | head 10
