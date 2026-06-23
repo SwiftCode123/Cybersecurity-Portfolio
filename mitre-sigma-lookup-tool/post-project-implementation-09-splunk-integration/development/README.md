@@ -146,4 +146,4 @@ mitre T1059.003 -o my_test_results
 
 <img width="1512" height="624" alt="image" src="https://github.com/user-attachments/assets/fb590907-0b6c-4fc9-925d-2f8288db47bc" />
 
-- Furthermore, if I scroll down, you can also see the recent detection activity filled with the `time` and `savedsearch_name` columns. Lastly, you have the trigger count and this is only 1 because I didn't run anything after (I my alert suppress period for 30 minutes so it did not fire again at the time of this writing), the 7 day trend and the top rule which is `T1059.003`
+- Furthermore, if I scroll down, you can also see the recent detection activity filled with the `time` and `savedsearch_name` columns. Lastly, you have the trigger count and this is only 1 because I didn't run anything after (My alert suppress period for 30 minutes so it did not fire again at the time of this writing), the 7 day trend and the top rule which is `T1059.003`
